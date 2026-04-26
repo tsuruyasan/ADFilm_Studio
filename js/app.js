@@ -7,6 +7,32 @@
 
   const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3b4Alx8jkqWjDU5detTwQpRNMr_zJio2AhR3sM-vNBrFuZYL4UOAACedOl9vciO9A/exec';
   const SHIPPING_FEE = 4000;
+  const ORDER_TOKEN = 'adf1lm_2026_s3cure_t0ken';
+
+  // ---- Helper: calculate price from config (not from DOM) ----
+  function calculateItemPrice(productKey, options) {
+    const prod = products[productKey];
+    if (!prod) return 0;
+    let price = options.isGlass ? prod.glassPrice : prod.basePrice;
+    if (options.scanTube) {
+      price += prod.tubePrice;
+      const tubeVal = parseInt(options.tubeLengthVal) || 100;
+      const extraLength = Math.max(0, tubeVal - 100);
+      price += Math.floor(extraLength / 10) * 1000;
+    }
+    if (options.roller) price += prod.rollerPrice;
+    if (prod.show110 && options.film110) price += (prod.price110 || 0);
+    if (prod.showAPS && options.filmAPS) price += (prod.priceAPS || 0);
+    return price;
+  }
+
+  // ---- Helper: safe text element creation ----
+  function el(tag, className, text) {
+    const e = document.createElement(tag);
+    if (className) e.className = className;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
 
   // ---- Product Data ----
   const products = {
@@ -289,18 +315,28 @@
     const prod = products[currentProduct];
     const isGlass = document.querySelector('.toggle-btn[data-value="glass"]').classList.contains('active');
 
+    const options = {
+      isGlass: isGlass,
+      scanTube: optScanTube.checked,
+      tubeLengthVal: tubeLength.value,
+      roller: optRoller.checked,
+      film110: prod.show110 && opt110.checked,
+      filmAPS: prod.showAPS && optAPS.checked,
+    };
+
     const item = {
       id: Date.now(),
       productKey: currentProduct,
       name: t(prod.nameKey),
       version: isGlass ? t('opt_glass') : t('opt_standard'),
-      scanTube: optScanTube.checked,
-      tubeLength: optScanTube.checked ? tubeLength.value + 'mm' : null,
-      adapterSize: optScanTube.checked ? adapterSize.value + 'mm' : null,
-      roller: optRoller.checked,
-      film110: prod.show110 && opt110.checked,
-      filmAPS: prod.showAPS && optAPS.checked,
-      price: parseInt(totalPrice.textContent.replace(/[₩,]/g, '')),
+      scanTube: options.scanTube,
+      tubeLength: options.scanTube ? tubeLength.value + 'mm' : null,
+      tubeLengthVal: options.scanTube ? parseInt(tubeLength.value) : null,
+      adapterSize: options.scanTube ? adapterSize.value + 'mm' : null,
+      roller: options.roller,
+      film110: options.film110,
+      filmAPS: options.filmAPS,
+      price: calculateItemPrice(currentProduct, options),
     };
 
     cart.push(item);
@@ -314,48 +350,48 @@
     showToast(t('toast_removed'));
   }
 
+  function getItemDetails(item) {
+    let details = item.version;
+    if (item.scanTube) details += ' / ' + t('opt_scantube') + ' ' + item.tubeLength;
+    if (item.roller) details += ' / ' + t('opt_roller');
+    if (item.film110) details += ' / 110';
+    if (item.filmAPS) details += ' / APS';
+    return details;
+  }
+
   function renderCart() {
     cartCount.textContent = cart.length;
+    cartItems.textContent = '';
 
     if (cart.length === 0) {
-      cartItems.innerHTML = '<p class="cart-empty">' + t('cart_empty') + '</p>';
+      cartItems.appendChild(el('p', 'cart-empty', t('cart_empty')));
       cartFooter.style.display = 'none';
       return;
     }
 
     cartFooter.style.display = 'block';
     let total = 0;
-    let html = '';
 
     cart.forEach(item => {
       total += item.price;
-      let details = item.version;
-      if (item.scanTube) details += ' / ' + t('opt_scantube') + ' ' + item.tubeLength;
-      if (item.roller) details += ' / ' + t('opt_roller');
-      if (item.film110) details += ' / 110';
-      if (item.filmAPS) details += ' / APS';
 
-      html += `
-        <div class="cart-item">
-          <div class="cart-item-info">
-            <h3>${item.name}</h3>
-            <p>${details}</p>
-          </div>
-          <div class="cart-item-right">
-            <span class="cart-item-price">₩${item.price.toLocaleString()}</span>
-            <button class="cart-item-remove" data-id="${item.id}">${t('remove')}</button>
-          </div>
-        </div>
-      `;
+      const row = el('div', 'cart-item');
+      const info = el('div', 'cart-item-info');
+      info.appendChild(el('h3', null, item.name));
+      info.appendChild(el('p', null, getItemDetails(item)));
+      row.appendChild(info);
+
+      const right = el('div', 'cart-item-right');
+      right.appendChild(el('span', 'cart-item-price', '₩' + item.price.toLocaleString()));
+      const removeBtn = el('button', 'cart-item-remove', t('remove'));
+      removeBtn.addEventListener('click', () => removeFromCart(item.id));
+      right.appendChild(removeBtn);
+      row.appendChild(right);
+
+      cartItems.appendChild(row);
     });
 
-    cartItems.innerHTML = html;
     cartTotal.textContent = '₩' + total.toLocaleString();
-
-    // Bind remove buttons
-    cartItems.querySelectorAll('.cart-item-remove').forEach(btn => {
-      btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
-    });
   }
 
   // ---- Checkout ----
@@ -366,29 +402,22 @@
   });
 
   function renderCheckoutSummary() {
+    checkoutItems.textContent = '';
     let subtotal = 0;
-    let html = '';
 
     cart.forEach(item => {
       subtotal += item.price;
-      let details = item.version;
-      if (item.scanTube) details += ' / ' + t('opt_scantube') + ' ' + item.tubeLength;
-      if (item.roller) details += ' / ' + t('opt_roller');
-      if (item.film110) details += ' / 110';
-      if (item.filmAPS) details += ' / APS';
 
-      html += `
-        <div class="checkout-item">
-          <div>
-            <div class="checkout-item-name">${item.name}</div>
-            <div class="checkout-item-details">${details}</div>
-          </div>
-          <div class="checkout-item-price">₩${item.price.toLocaleString()}</div>
-        </div>
-      `;
+      const row = el('div', 'checkout-item');
+      const left = document.createElement('div');
+      left.appendChild(el('div', 'checkout-item-name', item.name));
+      left.appendChild(el('div', 'checkout-item-details', getItemDetails(item)));
+      row.appendChild(left);
+      row.appendChild(el('div', 'checkout-item-price', '₩' + item.price.toLocaleString()));
+
+      checkoutItems.appendChild(row);
     });
 
-    checkoutItems.innerHTML = html;
     checkoutSubtotal.textContent = '₩' + subtotal.toLocaleString();
     checkoutTotal.textContent = '₩' + (subtotal + SHIPPING_FEE).toLocaleString();
   }
@@ -450,11 +479,13 @@
     submitOrderBtn.disabled = true;
     submitOrderBtn.textContent = t('checkout_submitting');
 
-    const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
-    const total = subtotal + SHIPPING_FEE;
+    // Client-side total for display only — server recalculates from product config
+    const displaySubtotal = cart.reduce((sum, item) => sum + item.price, 0);
+    const displayTotal = displaySubtotal + SHIPPING_FEE;
     const orderId = generateOrderId();
 
     const orderData = {
+      token: ORDER_TOKEN,
       orderId: orderId,
       name: custName.value.trim(),
       phone: custPhone.value.trim(),
@@ -466,17 +497,15 @@
         name: item.name,
         productKey: item.productKey,
         version: item.version,
+        isGlass: item.version === t('opt_glass'),
         scanTube: item.scanTube,
         tubeLength: item.tubeLength,
+        tubeLengthVal: item.tubeLengthVal,
         adapterSize: item.adapterSize,
         roller: item.roller,
         film110: item.film110,
         filmAPS: item.filmAPS,
-        price: item.price,
       })),
-      subtotal: subtotal,
-      shipping: SHIPPING_FEE,
-      total: total,
       lang: currentLang,
     };
 
@@ -488,11 +517,10 @@
       });
 
       // Google Apps Script returns an opaque redirect — if fetch didn't throw, the request was sent
-      showConfirmation(orderId, total);
+      showConfirmation(orderId, displayTotal);
       cart = [];
       renderCart();
     } catch (err) {
-      console.error('Order submission error:', err);
       showToast(t('checkout_error'));
     } finally {
       submitOrderBtn.disabled = false;
