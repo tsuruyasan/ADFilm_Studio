@@ -6,10 +6,15 @@
 // 1. Go to https://script.google.com and create a new project
 // 2. Replace the default Code.gs content with this file
 // 3. Replace SPREADSHEET_ID with your Google Sheet ID
-// 4. Deploy > New deployment > Web app
+// 4. Deploy > Manage deployments > Edit (pencil icon)
+//    - Version: New version
 //    - Execute as: Me
 //    - Who has access: Anyone
+//    - Click Deploy
 // 5. Copy the deployment URL and paste it into js/app.js as APPS_SCRIPT_URL
+//
+// IMPORTANT: Every time you edit this script, you must create a
+// NEW VERSION via Deploy > Manage deployments > Edit > Version: New version
 // ==================================================
 
 const SPREADSHEET_ID = 'PASTE_YOUR_SPREADSHEET_ID_HERE';
@@ -18,40 +23,7 @@ const SHEET_NAME = 'Orders';
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
-
-    // Write to spreadsheet
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    let sheet = ss.getSheetByName(SHEET_NAME);
-    if (!sheet) {
-      sheet = ss.insertSheet(SHEET_NAME);
-      sheet.appendRow([
-        'Order ID', 'Date', 'Name', 'Phone', 'Email',
-        'Postal Code', 'Address', 'Detail Address',
-        'Items', 'Subtotal', 'Shipping', 'Total', 'Payment Status'
-      ]);
-      sheet.getRange(1, 1, 1, 13).setFontWeight('bold');
-    }
-
-    const now = new Date();
-    const dateStr = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm');
-
-    sheet.appendRow([
-      data.orderId,
-      dateStr,
-      data.name,
-      data.phone,
-      data.email,
-      data.zip,
-      data.address,
-      data.detailAddress,
-      JSON.stringify(data.items),
-      data.subtotal,
-      data.shipping,
-      data.total,
-      '미확인'
-    ]);
-
-    // Send confirmation email
+    writeToSheet(data);
     sendConfirmationEmail(data);
 
     return ContentService
@@ -59,10 +31,51 @@ function doPost(e) {
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
+    Logger.log('doPost error: ' + error.message + '\n' + error.stack);
     return ContentService
       .createTextOutput(JSON.stringify({ success: false, error: error.message }))
       .setMimeType(ContentService.MimeType.JSON);
   }
+}
+
+// Also handle GET for testing — visit the URL in a browser to verify it's live
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ status: 'ok', message: 'AD filmstudio order API is running' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function writeToSheet(data) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  let sheet = ss.getSheetByName(SHEET_NAME);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHEET_NAME);
+    sheet.appendRow([
+      'Order ID', 'Date', 'Name', 'Phone', 'Email',
+      'Postal Code', 'Address', 'Detail Address',
+      'Items', 'Subtotal', 'Shipping', 'Total', 'Payment Status'
+    ]);
+    sheet.getRange(1, 1, 1, 13).setFontWeight('bold');
+  }
+
+  const now = new Date();
+  const dateStr = Utilities.formatDate(now, 'Asia/Seoul', 'yyyy-MM-dd HH:mm');
+
+  sheet.appendRow([
+    data.orderId,
+    dateStr,
+    data.name,
+    data.phone,
+    data.email,
+    data.zip,
+    data.address,
+    data.detailAddress,
+    JSON.stringify(data.items),
+    data.subtotal,
+    data.shipping,
+    data.total,
+    '미확인'
+  ]);
 }
 
 function sendConfirmationEmail(data) {

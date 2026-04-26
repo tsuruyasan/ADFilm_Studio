@@ -481,17 +481,19 @@
     };
 
     try {
-      await fetch(APPS_SCRIPT_URL, {
+      const response = await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify(orderData),
       });
+
+      const result = await response.json();
+      if (!result.success) throw new Error(result.error || 'Unknown error');
 
       showConfirmation(orderId, total);
       cart = [];
       renderCart();
     } catch (err) {
+      console.error('Order submission error:', err);
       showToast(t('checkout_error'));
     } finally {
       submitOrderBtn.disabled = false;
