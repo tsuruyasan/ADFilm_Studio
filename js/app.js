@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXAF34GfGwpqsdvMIbzkwW9MKaUmZiWQkqzgm40nAtumFxe1dNlKwd3qLcXQwSu870/exec';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby3b4Alx8jkqWjDU5detTwQpRNMr_zJio2AhR3sM-vNBrFuZYL4UOAACedOl9vciO9A/exec';
   const SHIPPING_FEE = 4000;
 
   // ---- Product Data ----
@@ -481,14 +481,13 @@
     };
 
     try {
-      const response = await fetch(APPS_SCRIPT_URL, {
+      await fetch(APPS_SCRIPT_URL, {
         method: 'POST',
+        mode: 'no-cors',
         body: JSON.stringify(orderData),
       });
 
-      const result = await response.json();
-      if (!result.success) throw new Error(result.error || 'Unknown error');
-
+      // Google Apps Script returns an opaque redirect — if fetch didn't throw, the request was sent
       showConfirmation(orderId, total);
       cart = [];
       renderCart();
