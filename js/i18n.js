@@ -62,6 +62,39 @@ const translations = {
     toast_added: '장바구니에 추가되었습니다',
     toast_removed: '장바구니에서 제거되었습니다',
     remove: '삭제',
+    // Checkout
+    checkout_title: '주문서',
+    checkout_name: '이름',
+    checkout_name_placeholder: '홍길동',
+    checkout_phone: '전화번호',
+    checkout_phone_placeholder: '010-1234-5678',
+    checkout_email: '이메일',
+    checkout_email_placeholder: 'example@email.com',
+    checkout_zip: '우편번호',
+    checkout_zip_search: '주소 검색',
+    checkout_address: '주소',
+    checkout_detail_address: '상세주소',
+    checkout_detail_placeholder: '아파트명, 동/호수 등',
+    checkout_summary: '주문 요약',
+    checkout_subtotal: '상품 금액',
+    checkout_shipping: '배송비',
+    checkout_total: '총 결제 금액',
+    checkout_submit: '주문 제출',
+    checkout_submitting: '주문 처리 중...',
+    checkout_btn: '주문하기',
+    checkout_required: '필수 항목을 모두 입력해주세요',
+    checkout_invalid_phone: '올바른 전화번호를 입력해주세요',
+    checkout_invalid_email: '올바른 이메일을 입력해주세요',
+    checkout_error: '주문 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
+    // Confirmation
+    confirm_title: '주문이 접수되었습니다',
+    confirm_order_id: '주문번호',
+    confirm_bank_title: '입금 안내',
+    confirm_bank_info: '토스뱅크 1002-3677-6269 (가은율)',
+    confirm_amount: '입금 금액',
+    confirm_memo: '입금 시 주문번호를 기재해주세요',
+    confirm_notice: '입금 확인 후 발송됩니다',
+    confirm_back: '쇼핑 계속하기',
   },
   en: {
     cart: 'Cart',
@@ -122,6 +155,39 @@ const translations = {
     toast_added: 'Added to cart',
     toast_removed: 'Removed from cart',
     remove: 'Remove',
+    // Checkout
+    checkout_title: 'Checkout',
+    checkout_name: 'Name',
+    checkout_name_placeholder: 'John Doe',
+    checkout_phone: 'Phone',
+    checkout_phone_placeholder: '010-1234-5678',
+    checkout_email: 'Email',
+    checkout_email_placeholder: 'example@email.com',
+    checkout_zip: 'Postal Code',
+    checkout_zip_search: 'Search Address',
+    checkout_address: 'Address',
+    checkout_detail_address: 'Detail Address',
+    checkout_detail_placeholder: 'Apt, unit, floor, etc.',
+    checkout_summary: 'Order Summary',
+    checkout_subtotal: 'Subtotal',
+    checkout_shipping: 'Shipping',
+    checkout_total: 'Total',
+    checkout_submit: 'Submit Order',
+    checkout_submitting: 'Processing...',
+    checkout_btn: 'Checkout',
+    checkout_required: 'Please fill in all required fields',
+    checkout_invalid_phone: 'Please enter a valid phone number',
+    checkout_invalid_email: 'Please enter a valid email address',
+    checkout_error: 'An error occurred. Please try again.',
+    // Confirmation
+    confirm_title: 'Order Submitted',
+    confirm_order_id: 'Order ID',
+    confirm_bank_title: 'Payment Instructions',
+    confirm_bank_info: 'Toss Bank 1002-3677-6269 (Ka Eunryul)',
+    confirm_amount: 'Amount to Transfer',
+    confirm_memo: 'Please include your Order ID in the transfer memo',
+    confirm_notice: 'Your order will ship after payment is confirmed',
+    confirm_back: 'Continue Shopping',
   }
 };
 
@@ -136,6 +202,14 @@ function setLanguage(lang) {
     const key = el.getAttribute('data-i18n');
     if (translations[lang][key]) {
       el.textContent = translations[lang][key];
+    }
+  });
+
+  // Update placeholders
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    if (translations[lang][key]) {
+      el.placeholder = translations[lang][key];
     }
   });
 

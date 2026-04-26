@@ -225,6 +225,96 @@
       </div>
     </section>
 
+    <!-- ====== CHECKOUT PAGE ====== -->
+    <section class="page page-checkout" id="page-checkout">
+      <div class="checkout-layout">
+        <!-- Left: Order Form -->
+        <div class="checkout-form-wrap">
+          <h1 class="checkout-title" data-i18n="checkout_title">주문서</h1>
+          <form id="checkoutForm" novalidate>
+            <div class="form-group">
+              <label for="custName" data-i18n="checkout_name">이름</label>
+              <input type="text" id="custName" required data-i18n-placeholder="checkout_name_placeholder" placeholder="홍길동">
+            </div>
+            <div class="form-group">
+              <label for="custPhone" data-i18n="checkout_phone">전화번호</label>
+              <input type="tel" id="custPhone" required data-i18n-placeholder="checkout_phone_placeholder" placeholder="010-1234-5678">
+            </div>
+            <div class="form-group">
+              <label for="custEmail" data-i18n="checkout_email">이메일</label>
+              <input type="email" id="custEmail" required data-i18n-placeholder="checkout_email_placeholder" placeholder="example@email.com">
+            </div>
+            <div class="form-group">
+              <label data-i18n="checkout_zip">우편번호</label>
+              <div class="zip-row">
+                <input type="text" id="custZip" readonly required placeholder="00000">
+                <button type="button" class="zip-search-btn" id="zipSearchBtn" data-i18n="checkout_zip_search">주소 검색</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="custAddress" data-i18n="checkout_address">주소</label>
+              <input type="text" id="custAddress" readonly required>
+            </div>
+            <div class="form-group">
+              <label for="custDetailAddress" data-i18n="checkout_detail_address">상세주소</label>
+              <input type="text" id="custDetailAddress" required data-i18n-placeholder="checkout_detail_placeholder" placeholder="아파트명, 동/호수 등">
+            </div>
+          </form>
+        </div>
+
+        <!-- Right: Order Summary -->
+        <div class="checkout-summary-wrap">
+          <div class="checkout-summary-sticky">
+            <h2 class="checkout-summary-title" data-i18n="checkout_summary">주문 요약</h2>
+            <div class="checkout-items" id="checkoutItems"></div>
+            <div class="checkout-totals">
+              <div class="checkout-line">
+                <span data-i18n="checkout_subtotal">상품 금액</span>
+                <span id="checkoutSubtotal">₩0</span>
+              </div>
+              <div class="checkout-line">
+                <span data-i18n="checkout_shipping">배송비</span>
+                <span>₩4,000</span>
+              </div>
+              <div class="checkout-line checkout-line-total">
+                <span data-i18n="checkout_total">총 결제 금액</span>
+                <span id="checkoutTotal">₩0</span>
+              </div>
+            </div>
+            <button type="button" class="submit-order-btn" id="submitOrderBtn" data-i18n="checkout_submit">주문 제출</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confirmation View (hidden until order success) -->
+      <div class="checkout-confirmation" id="checkoutConfirmation" style="display:none;">
+        <div class="confirm-icon">
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <h1 class="confirm-heading" data-i18n="confirm_title">주문이 접수되었습니다</h1>
+        <div class="confirm-detail">
+          <div class="confirm-row">
+            <span data-i18n="confirm_order_id">주문번호</span>
+            <span id="confirmOrderId"></span>
+          </div>
+        </div>
+        <div class="confirm-bank-box">
+          <h3 data-i18n="confirm_bank_title">입금 안내</h3>
+          <p class="confirm-bank-info" data-i18n="confirm_bank_info">토스뱅크 1002-3677-6269 (가은율)</p>
+          <div class="confirm-row">
+            <span data-i18n="confirm_amount">입금 금액</span>
+            <span id="confirmAmount" class="confirm-amount-value"></span>
+          </div>
+          <p class="confirm-memo" data-i18n="confirm_memo">입금 시 주문번호를 기재해주세요</p>
+        </div>
+        <p class="confirm-notice" data-i18n="confirm_notice">입금 확인 후 발송됩니다</p>
+        <button class="confirm-back-btn" id="confirmBackBtn" data-i18n="confirm_back">쇼핑 계속하기</button>
+      </div>
+    </section>
+
     <!-- ====== BLOG PAGE ====== -->
     <section class="page page-blog" id="page-blog">
       <h1 class="page-title" data-i18n="blog_title">블로그</h1>
@@ -343,6 +433,7 @@
           <span data-i18n="total_price">총 가격</span>
           <span id="cartTotal">₩0</span>
         </div>
+        <button class="checkout-btn" id="checkoutBtn" data-i18n="checkout_btn">주문하기</button>
       </div>
     </aside>
     <div class="cart-overlay" id="cartOverlay"></div>
@@ -357,6 +448,7 @@
     </div>
   </footer>
 
+  <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/app.js"></script>
 </body>

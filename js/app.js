@@ -5,6 +5,9 @@
 (function () {
   'use strict';
 
+  const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+  const SHIPPING_FEE = 4000;
+
   // ---- Product Data ----
   const products = {
     small: {
@@ -59,6 +62,25 @@
   const cartTotal = document.getElementById('cartTotal');
   const langToggle = document.getElementById('langToggle');
   const addToCartBtn = document.getElementById('addToCartBtn');
+
+  // Checkout elements
+  const checkoutBtn = document.getElementById('checkoutBtn');
+  const checkoutForm = document.getElementById('checkoutForm');
+  const checkoutItems = document.getElementById('checkoutItems');
+  const checkoutSubtotal = document.getElementById('checkoutSubtotal');
+  const checkoutTotal = document.getElementById('checkoutTotal');
+  const submitOrderBtn = document.getElementById('submitOrderBtn');
+  const zipSearchBtn = document.getElementById('zipSearchBtn');
+  const custName = document.getElementById('custName');
+  const custPhone = document.getElementById('custPhone');
+  const custEmail = document.getElementById('custEmail');
+  const custZip = document.getElementById('custZip');
+  const custAddress = document.getElementById('custAddress');
+  const custDetailAddress = document.getElementById('custDetailAddress');
+  const checkoutConfirmation = document.getElementById('checkoutConfirmation');
+  const confirmOrderId = document.getElementById('confirmOrderId');
+  const confirmAmount = document.getElementById('confirmAmount');
+  const confirmBackBtn = document.getElementById('confirmBackBtn');
 
   // Config elements
   const configProductName = document.getElementById('configProductName');
@@ -335,6 +357,162 @@
       btn.addEventListener('click', () => removeFromCart(parseInt(btn.dataset.id)));
     });
   }
+
+  // ---- Checkout ----
+  checkoutBtn.addEventListener('click', () => {
+    closeCart();
+    renderCheckoutSummary();
+    showPage('checkout');
+  });
+
+  function renderCheckoutSummary() {
+    let subtotal = 0;
+    let html = '';
+
+    cart.forEach(item => {
+      subtotal += item.price;
+      let details = item.version;
+      if (item.scanTube) details += ' / ' + t('opt_scantube') + ' ' + item.tubeLength;
+      if (item.roller) details += ' / ' + t('opt_roller');
+      if (item.film110) details += ' / 110';
+      if (item.filmAPS) details += ' / APS';
+
+      html += `
+        <div class="checkout-item">
+          <div>
+            <div class="checkout-item-name">${item.name}</div>
+            <div class="checkout-item-details">${details}</div>
+          </div>
+          <div class="checkout-item-price">₩${item.price.toLocaleString()}</div>
+        </div>
+      `;
+    });
+
+    checkoutItems.innerHTML = html;
+    checkoutSubtotal.textContent = '₩' + subtotal.toLocaleString();
+    checkoutTotal.textContent = '₩' + (subtotal + SHIPPING_FEE).toLocaleString();
+  }
+
+  // ---- Daum Postcode ----
+  zipSearchBtn.addEventListener('click', () => {
+    new daum.Postcode({
+      oncomplete: function (data) {
+        custZip.value = data.zonecode;
+        custAddress.value = data.roadAddress || data.jibunAddress;
+        custDetailAddress.focus();
+      }
+    }).open();
+  });
+
+  // ---- Form Validation ----
+  function validateCheckoutForm() {
+    let valid = true;
+
+    checkoutForm.querySelectorAll('input').forEach(input => input.classList.remove('invalid'));
+
+    const requiredFields = [custName, custPhone, custEmail, custZip, custAddress, custDetailAddress];
+    for (const field of requiredFields) {
+      if (!field.value.trim()) {
+        field.classList.add('invalid');
+        valid = false;
+      }
+    }
+
+    if (custPhone.value && !/^01[016789]-?\d{3,4}-?\d{4}$/.test(custPhone.value.trim())) {
+      custPhone.classList.add('invalid');
+      if (valid) showToast(t('checkout_invalid_phone'));
+      valid = false;
+    }
+
+    if (custEmail.value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(custEmail.value.trim())) {
+      custEmail.classList.add('invalid');
+      if (valid) showToast(t('checkout_invalid_email'));
+      valid = false;
+    }
+
+    if (valid === false && !custPhone.classList.contains('invalid') && !custEmail.classList.contains('invalid')) {
+      showToast(t('checkout_required'));
+    }
+
+    return valid;
+  }
+
+  // ---- Order Submission ----
+  function generateOrderId() {
+    const now = new Date();
+    const pad = (n) => String(n).padStart(2, '0');
+    return 'AD-' + now.getFullYear() + pad(now.getMonth() + 1) + pad(now.getDate()) + '-' + pad(now.getHours()) + pad(now.getMinutes()) + pad(now.getSeconds());
+  }
+
+  submitOrderBtn.addEventListener('click', async () => {
+    if (!validateCheckoutForm()) return;
+
+    submitOrderBtn.disabled = true;
+    submitOrderBtn.textContent = t('checkout_submitting');
+
+    const subtotal = cart.reduce((sum, item) => sum + item.price, 0);
+    const total = subtotal + SHIPPING_FEE;
+    const orderId = generateOrderId();
+
+    const orderData = {
+      orderId: orderId,
+      name: custName.value.trim(),
+      phone: custPhone.value.trim(),
+      email: custEmail.value.trim(),
+      zip: custZip.value.trim(),
+      address: custAddress.value.trim(),
+      detailAddress: custDetailAddress.value.trim(),
+      items: cart.map(item => ({
+        name: item.name,
+        productKey: item.productKey,
+        version: item.version,
+        scanTube: item.scanTube,
+        tubeLength: item.tubeLength,
+        adapterSize: item.adapterSize,
+        roller: item.roller,
+        film110: item.film110,
+        filmAPS: item.filmAPS,
+        price: item.price,
+      })),
+      subtotal: subtotal,
+      shipping: SHIPPING_FEE,
+      total: total,
+      lang: currentLang,
+    };
+
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(orderData),
+      });
+
+      showConfirmation(orderId, total);
+      cart = [];
+      renderCart();
+    } catch (err) {
+      showToast(t('checkout_error'));
+    } finally {
+      submitOrderBtn.disabled = false;
+      submitOrderBtn.textContent = t('checkout_submit');
+    }
+  });
+
+  function showConfirmation(orderId, total) {
+    document.querySelector('.checkout-layout').style.display = 'none';
+    checkoutConfirmation.style.display = 'block';
+    confirmOrderId.textContent = orderId;
+    confirmAmount.textContent = '₩' + total.toLocaleString();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  confirmBackBtn.addEventListener('click', () => {
+    document.querySelector('.checkout-layout').style.display = '';
+    checkoutConfirmation.style.display = 'none';
+    checkoutForm.reset();
+    showPage('shop');
+  });
 
   // ---- Toast ----
   function showToast(message) {
