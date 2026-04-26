@@ -5,7 +5,7 @@
 (function () {
   'use strict';
 
-  const APPS_SCRIPT_URL = 'PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXAF34GfGwpqsdvMIbzkwW9MKaUmZiWQkqzgm40nAtumFxe1dNlKwd3qLcXQwSu870/exec';
   const SHIPPING_FEE = 4000;
 
   // ---- Product Data ----
