@@ -38,7 +38,7 @@
   const products = {
     small: {
       nameKey: 'product_small_name',
-      format: '35mm / 36x24',
+      format: '110 + APS + 35mm',
       basePrice: 45000,
       glassPrice: 65000,
       tubePrice: 15000,
@@ -48,7 +48,7 @@
     },
     medium: {
       nameKey: 'product_medium_name',
-      format: '120 / 6x4.5 ~ 6x9',
+      format: '120mm / 6x45~69',
       basePrice: 55000,
       glassPrice: 78000,
       tubePrice: 18000,
@@ -58,7 +58,7 @@
     },
     multi: {
       nameKey: 'product_multi_name',
-      format: '35mm + 120 + 110 + APS',
+      format: '110 + APS + 35mm + 120mm',
       basePrice: 75000,
       glassPrice: 98000,
       tubePrice: 20000,
